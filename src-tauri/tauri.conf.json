@@ -1,0 +1,76 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TASK FM",
+  "version": "0.0.1",
+  "identifier": "com.taskfm.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "TASK FM",
+        "width": 360,
+        "height": 580,
+        "minWidth": 320,
+        "minHeight": 500,
+        "resizable": true,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": 26, "y": 19 },
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "visible": true,
+        "transparent": true,
+        "shadow": false,
+        "center": false
+      }
+    ],
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": ["pack-resources/**/*"],
+    "category": "Productivity",
+    "copyright": "© 2025 TASK FM. All rights reserved.",
+    "shortDescription": "A tiny checklist that lives in your menu bar.",
+    "longDescription": "TASK FM is a lightweight, elegant checklist app that lives in your macOS menu bar. Fast, focused, and distraction-free.",
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "infoPlist": "../src-tauri/Info.plist",
+      "dmg": {
+        "background": null,
+        "windowSize": { "width": 540, "height": 380 },
+        "appPosition": { "x": 150, "y": 160 },
+        "applicationFolderPosition": { "x": 390, "y": 160 }
+      },
+      "signingIdentity": null,
+      "providerShortName": null,
+      "entitlements": null
+    },
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": ["English"],
+        "installMode": "perMachine"
+      },
+      "wix": null
+    }
+  }
+}
