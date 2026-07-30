@@ -209,16 +209,6 @@ export function Settings() {
           </>}
         </div>
 
-        {/* System */}
-        <div className="settings-section-title">{t.system}</div>
-        <div className="settings-section">
-          <div className="settings-row">
-            <div className="settings-row-label">{t.launchAtStartup}</div>
-            <button className={`toggle ${settings.launchAtStartup ? 'on' : ''}`}
-              onClick={() => toggle('launchAtStartup')} />
-          </div>
-        </div>
-
         {/* Language */}
         <div className="settings-section-title">{t.language}</div>
         <div className="settings-section">
