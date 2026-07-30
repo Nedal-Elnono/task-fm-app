@@ -40,3 +40,4 @@ pnpm-debug.log*
 # DMG / release artifacts at project root
 *.dmg
 *.app
+release-*/
