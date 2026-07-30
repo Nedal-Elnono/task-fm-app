@@ -6,6 +6,7 @@ export const SOUND_PACKS: SoundPack[] = [
   { id: 'elsisi',  name: 'Elsisi',   sounds: {} },
   { id: 'bahgt',   name: 'Bahgt',    sounds: {} },
   { id: 'elguyar', name: 'El Guyar', sounds: {} },
+  { id: 'shuffle', name: 'Shuffle',  sounds: {} }, // random pack per event
 ];
 
 // All pack IDs that live on disk (not synthesized)
@@ -258,6 +259,19 @@ function pickFresh(candidates: string[]): string {
 export function playSound(event: SoundEvent, packId: string, volume: number) {
   stopCurrentSound();
   console.log(`[Sound] play event="${event}" pack="${packId}" vol=${volume}`);
+
+  // Shuffle: pick a random pack per event, among packs that have files for it
+  if (packId === 'shuffle') {
+    const candidates = Array.from(FILE_PACK_IDS).filter(
+      (id) => (filePackPaths[id]?.[event]?.length ?? 0) > 0
+    );
+    if (candidates.length === 0) {
+      console.warn(`[Sound] shuffle: no pack has files for "${event}" — silent`);
+      return;
+    }
+    packId = candidates[Math.floor(Math.random() * candidates.length)];
+    console.log(`[Sound] shuffle → "${packId}"`);
+  }
 
   // 1. Custom upload folder always wins
   const customPaths = customFilePaths[event];

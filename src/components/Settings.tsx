@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { useT } from '../hooks/useT';
@@ -5,6 +6,13 @@ import { SOUND_PACKS, playSound } from '../sounds/soundEngine';
 
 
 export function Settings() {
+  const [appVersion, setAppVersion] = useState('');
+  useEffect(() => {
+    import('@tauri-apps/api/app')
+      .then(({ getVersion }) => getVersion())
+      .then(setAppVersion)
+      .catch(() => {});
+  }, []);
   const settings = useStore((s) => s.settings);
   const tasks = useStore((s) => s.tasks);
   const update = useStore((s) => s.updateSettings);
@@ -123,8 +131,15 @@ export function Settings() {
           <div className="pack-options">
             {SOUND_PACKS.map((p) => (
               <button key={p.id}
-                className={`pack-chip ${settings.activeSoundPack === p.id ? 'active' : ''}`}
+                className={`pack-chip ${settings.activeSoundPack === p.id ? 'active' : ''} ${p.id === 'shuffle' ? 'span-full' : ''}`}
+                style={p.id === 'shuffle' ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 } : undefined}
                 onClick={() => update({ activeSoundPack: p.id })}>
+                {p.id === 'shuffle' && (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M2 17c5 0 6-2.5 8.5-5C13 9.5 14 7 19 7M2 7c5 0 6 2.5 8.5 5 2.5 2.5 3.5 5 8.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.5 4L20 7l-3.5 3M16.5 14l3.5 3-3.5 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
                 {p.name}
               </button>
             ))}
@@ -260,7 +275,7 @@ export function Settings() {
           {branding.logoDataUrl
             ? <img src={branding.logoDataUrl} style={{ height: 24, objectFit: 'contain', display: 'block', margin: '0 auto' }} />
             : branding.appName}
-          <span style={{ fontSize: 10, opacity: 0.6, letterSpacing: '0.02em' }}>0.0.1</span>
+          <span style={{ fontSize: 10, opacity: 0.6, letterSpacing: '0.02em' }}>{appVersion}</span>
         </div>
       </div>
     </motion.div>

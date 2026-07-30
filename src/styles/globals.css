@@ -730,21 +730,24 @@ input, textarea {
   transition: border-color 0.4s, box-shadow 0.4s;
 }
 
-/* Glow ring drawn on an overlay above all content — an inset shadow on
-   .popup itself would be painted underneath children touching the edges. */
+/* Audio-reactive glow ring — drawn on an overlay above all content.
+   The whole outline lights up and dims together: --glow-o is set per-frame
+   from the audio analyser in useAudioGlow, following the live loudness. */
 .popup::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 999;
-  border-radius: 10px; /* follows the native macOS window corner radius */
-  box-shadow: inset 0 0 0 1px rgba(245, 197, 66, 0.45);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-.popup.audio-glow::after {
-  opacity: 1;
+  border-radius: 26px; /* follows the native macOS window corner radius */
+  padding: 1.5px;
+  background: rgba(245, 197, 66, 0.9);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  /* Halo around the line — grows and shrinks with the pulse (set from JS) */
+  filter: drop-shadow(0 0 var(--glow-b, 2px) rgba(245, 197, 66, 0.85));
+  opacity: var(--glow-o, 0);
 }
 
 /* ─── Step Drag Handle ─── */
@@ -1154,7 +1157,7 @@ input, textarea {
   color: var(--text3);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  padding: 12px 16px 4px;
+  padding: 12px 0 4px;
   margin: 0 14px;
 }
 
@@ -1260,8 +1263,8 @@ input, textarea {
 }
 
 .pack-chip {
-  padding: 5px 12px;
-  border-radius: 20px;
+  padding: 8px 8px;
+  border-radius: 10px; /* match .theme-chip */
   text-align: center;
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -1270,12 +1273,18 @@ input, textarea {
   color: var(--text2);
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .pack-chip.active {
   background: var(--accent-dim);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* Shuffle chip spans the full grid row */
+.pack-chip.span-full {
+  grid-column: 1 / -1;
 }
 
 /* Add task form */
@@ -1418,6 +1427,7 @@ input, textarea {
   height: 100%;
   padding: 22px 22px 20px;
   overflow-y: auto;
+  position: relative; /* anchor for the top drag strip */
 }
 
 .onboarding-brand {
@@ -1429,6 +1439,7 @@ input, textarea {
   letter-spacing: 0.1em;
   color: var(--text3);
   text-transform: uppercase;
+  margin-top: 26px; /* clear the traffic lights (window overlay, y:26) */
   margin-bottom: 18px;
 }
 
@@ -1558,74 +1569,3 @@ input, textarea {
 
 .onboarding-toggle-row:last-child { border-bottom: none; }
 
-/* ─── Dashboard ─────────────────────────────────────────────────────────────── */
-
-.dash-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 8px 16px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.dash-tab {
-  padding: 5px 14px;
-  border-radius: 6px 6px 0 0;
-  background: none;
-  border: 1px solid transparent;
-  border-bottom: none;
-  color: var(--text3);
-  font-size: 12px;
-  cursor: pointer;
-  transition: color 0.12s;
-}
-.dash-tab.active {
-  color: var(--text);
-  border-color: var(--border);
-  background: var(--bg2);
-}
-.dash-tab:hover:not(.active) { color: var(--text2); }
-
-.dash-pack-row {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-}
-.dash-pack-row:last-child { border-bottom: none; }
-
-.dash-btn {
-  padding: 4px 9px;
-  border-radius: 6px;
-  background: var(--bg3);
-  border: none;
-  color: var(--text2);
-  font-size: 10px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
-}
-.dash-btn:hover { background: var(--border); color: var(--text); }
-.dash-btn.accent { background: var(--accent-dim); color: var(--accent); }
-.dash-btn.accent:hover { background: var(--accent); color: #000; }
-.dash-btn.active { background: var(--accent-dim); color: var(--accent); }
-.dash-btn:disabled { opacity: 0.5; pointer-events: none; }
-
-.dash-input {
-  flex: 1;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  color: var(--text);
-  font-size: 11px;
-  font-family: var(--font);
-  outline: none;
-  width: 100%;
-  transition: border-color 0.12s;
-}
-.dash-input:focus { border-color: var(--accent); }
-.dash-input.overridden { border-color: var(--accent); color: var(--accent); }
-
-.dash-label-row {
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--border);
-}
-.dash-label-row:last-child { border-bottom: none; }

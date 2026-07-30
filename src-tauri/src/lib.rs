@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Emitter, Manager, Runtime, WebviewWindow,
+    AppHandle, Manager, Runtime, WebviewWindow,
 };
 
 // Mod 30: persist last window position so drag position is remembered across hides
@@ -10,6 +10,44 @@ static LAST_POSITION: Mutex<Option<(i32, i32)>> = Mutex::new(None);
 
 fn get_popup_window<R: Runtime>(app: &AppHandle<R>) -> Option<WebviewWindow<R>> {
     app.get_webview_window("main")
+}
+
+/// Corner radius (pt) of the popup window — matches macOS Tahoe's standard
+/// window radius so the app sits next to Finder indistinguishably.
+/// Keep in sync with the glow ring's border-radius in globals.css.
+#[cfg(target_os = "macos")]
+const POPUP_CORNER_RADIUS: f64 = 26.0;
+
+/// Clip the popup window to an Apple-style continuous-corner squircle.
+/// Public AppKit APIs only (window background + CALayer corner masking) —
+/// no macos-private-api, so this is Mac App Store safe.
+#[cfg(target_os = "macos")]
+fn apply_squircle<R: Runtime>(window: &WebviewWindow<R>) {
+    use objc2::{class, msg_send, runtime::AnyObject};
+    use objc2_foundation::NSString;
+
+    let Ok(ns_window) = window.ns_window() else { return };
+    let ns_window = ns_window as *mut AnyObject;
+    unsafe {
+        let clear: *mut AnyObject = msg_send![class!(NSColor), clearColor];
+        let _: () = msg_send![ns_window, setOpaque: false];
+        let _: () = msg_send![ns_window, setBackgroundColor: clear];
+
+        let content_view: *mut AnyObject = msg_send![ns_window, contentView];
+        if content_view.is_null() {
+            return;
+        }
+        let _: () = msg_send![content_view, setWantsLayer: true];
+        let layer: *mut AnyObject = msg_send![content_view, layer];
+        if layer.is_null() {
+            return;
+        }
+        let _: () = msg_send![layer, setCornerRadius: POPUP_CORNER_RADIUS];
+        let curve = NSString::from_str("continuous"); // kCACornerCurveContinuous
+        let _: () = msg_send![layer, setCornerCurve: &*curve];
+        let _: () = msg_send![layer, setMasksToBounds: true];
+        let _: () = msg_send![ns_window, invalidateShadow];
+    }
 }
 
 fn toggle_popup<R: Runtime>(app: &AppHandle<R>) {
@@ -47,8 +85,8 @@ fn position_popup_near_tray<R: Runtime>(window: &WebviewWindow<R>) {
         let scale = monitor.scale_factor();
         let screen_w = monitor.size().width as f64 / scale;
         let screen_h = monitor.size().height as f64 / scale;
-        let popup_w = 360.0_f64;  // 340 visible + 10px padding each side
-        let popup_h = 580.0_f64;  // 560 visible + 10px padding each side
+        let popup_w = 320.0_f64;  // matches default window width
+        let popup_h = 500.0_f64;  // matches default window height
 
         // Mod 90: position for decorated window — window frame must clear macOS menu bar
         let x = (screen_w - popup_w - 8.0) as i32;
@@ -104,130 +142,6 @@ fn bytes_to_base64(bytes: &[u8]) -> String {
 #[tauri::command]
 fn hide_popup(window: tauri::WebviewWindow) {
     let _ = window.hide();
-}
-
-// ─── Admin Dashboard Commands ─────────────────────────────────────────────────
-
-#[tauri::command]
-fn open_dashboard(app: AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("dashboard") {
-        let _ = w.show();
-        let _ = w.set_focus();
-        return Ok(());
-    }
-    tauri::WebviewWindowBuilder::new(
-        &app,
-        "dashboard",
-        tauri::WebviewUrl::App("dashboard.html".into()),
-    )
-    .title("TASK FM — Dashboard")
-    .resizable(true)
-    .inner_size(1100.0, 720.0)
-    .min_inner_size(700.0, 480.0)
-    .center()
-    .build()
-    .map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-fn label_overrides_path(app: &AppHandle) -> std::path::PathBuf {
-    app.path()
-        .app_data_dir()
-        .unwrap_or_default()
-        .join("label-overrides.json")
-}
-
-fn load_png_icon(path: &str) -> Result<tauri::image::Image<'static>, String> {
-    let file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-    let decoder = png::Decoder::new(file);
-    let mut reader = decoder.read_info().map_err(|e| e.to_string())?;
-    let mut buf = vec![0u8; reader.output_buffer_size()];
-    let info = reader.next_frame(&mut buf).map_err(|e| e.to_string())?;
-    let raw = buf[..info.buffer_size()].to_vec();
-    let rgba: Vec<u8> = match info.color_type {
-        png::ColorType::Rgba => raw,
-        png::ColorType::Rgb  => raw.chunks(3).flat_map(|c| [c[0], c[1], c[2], 255u8]).collect(),
-        png::ColorType::GrayscaleAlpha => raw.chunks(2).flat_map(|c| [c[0], c[0], c[0], c[1]]).collect(),
-        png::ColorType::Grayscale => raw.iter().flat_map(|&v| [v, v, v, 255u8]).collect(),
-        _ => return Err("Unsupported PNG color type".into()),
-    };
-    Ok(tauri::image::Image::new_owned(rgba, info.width, info.height))
-}
-
-
-fn branding_path(app: &AppHandle) -> std::path::PathBuf {
-    app.path()
-        .app_data_dir()
-        .unwrap_or_default()
-        .join("branding.json")
-}
-
-#[tauri::command]
-fn get_branding(app: AppHandle) -> String {
-    let path = branding_path(&app);
-    std::fs::read_to_string(&path)
-        .unwrap_or_else(|_| r#"{"appName":"TASK FM","logoPath":"","trayIconPath":""}"#.into())
-}
-
-#[tauri::command]
-fn save_branding(app: AppHandle, json: String) -> Result<(), String> {
-    let path = branding_path(&app);
-    std::fs::write(&path, &json).map_err(|e| e.to_string())?;
-    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&json) {
-        // Update tray tooltip with new app name
-        if let Some(name) = parsed.get("appName").and_then(|v| v.as_str()) {
-            if let Some(tray) = app.tray_by_id("tray") {
-                let _ = tray.set_tooltip(Some(name));
-            }
-        }
-        // Update tray icon if path provided
-        if let Some(icon_path) = parsed.get("trayIconPath").and_then(|v| v.as_str()) {
-            if !icon_path.is_empty() {
-                if let Ok(icon) = load_png_icon(icon_path) {
-                    if let Some(tray) = app.tray_by_id("tray") {
-                        let _ = tray.set_icon(Some(icon));
-                    }
-                }
-            }
-        }
-        let _ = app.emit("branding-updated", parsed);
-    }
-    Ok(())
-}
-
-#[tauri::command]
-fn read_image_as_data_url(path: String) -> Result<String, String> {
-    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
-    let ext = std::path::Path::new(&path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("png")
-        .to_lowercase();
-    let mime = match ext.as_str() {
-        "jpg" | "jpeg" => "image/jpeg",
-        "gif"          => "image/gif",
-        "svg"          => "image/svg+xml",
-        "ico"          => "image/x-icon",
-        _              => "image/png",
-    };
-    Ok(format!("data:{};base64,{}", mime, bytes_to_base64(&bytes)))
-}
-
-#[tauri::command]
-fn get_label_overrides(app: AppHandle) -> String {
-    let path = label_overrides_path(&app);
-    std::fs::read_to_string(&path).unwrap_or_else(|_| r#"{"en":{},"ar":{}}"#.into())
-}
-
-#[tauri::command]
-fn save_label_overrides(app: AppHandle, json: String) -> Result<(), String> {
-    let path = label_overrides_path(&app);
-    std::fs::write(&path, &json).map_err(|e| e.to_string())?;
-    // Broadcast to all windows (main app picks this up for live label update)
-    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&json) {
-        let _ = app.emit("labels-updated", parsed);
-    }
-    Ok(())
 }
 
 /// Copy bundled pack-resources into app-data/sounds on first run (or if pack is missing).
@@ -702,6 +616,8 @@ pub fn run() {
 
             // Position and show popup on startup
             if let Some(window) = get_popup_window(app.handle()) {
+                #[cfg(target_os = "macos")]
+                apply_squircle(&window);
                 position_popup_near_tray(&window);
                 let _ = window.show();
                 let _ = window.set_focus();
@@ -760,11 +676,6 @@ pub fn run() {
             create_sound_pack,
             delete_sound_pack,
             add_sound_bytes_to_category,
-            get_label_overrides,
-            save_label_overrides,
-            get_branding,
-            save_branding,
-            read_image_as_data_url,
             update_tray_icon_rgba,
         ])
         .build(tauri::generate_context!())

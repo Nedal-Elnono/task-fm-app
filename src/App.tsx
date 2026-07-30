@@ -6,7 +6,7 @@ import { Settings } from './components/Settings';
 import { Archive } from './components/Archive';
 import { Trash } from './components/Trash';
 import { Onboarding } from './components/Onboarding';
-import { playSound, initCustomSounds, initElsisiSounds, initFilePack, onAudioPlay, onAudioStop, refreshAllPacks } from './sounds/soundEngine';
+import { playSound, initCustomSounds, initElsisiSounds, initFilePack, refreshAllPacks, getAnalyser } from './sounds/soundEngine';
 import { useTrayWave } from './tray/useTrayWave';
 import './styles/globals.css';
 
@@ -99,18 +99,60 @@ function useInactivityReminder() {
 
 function useAudioGlow() {
   useEffect(() => {
-    const popup = () => document.querySelector('.popup') as HTMLElement | null;
+    // Same proven pattern as useTrayWave: always-on rAF loop reading the
+    // analyser directly — no play/stop event plumbing to go stale.
+    let raf = 0;
+    let bins: Uint8Array | null = null;
+    let level = 0;          // smoothed loudness 0..1
+    let lastHigh = -Infinity;
+    let t = 0;              // pulse clock (s)
+    let prevTs = 0;
 
-    const unsubPlay = onAudioPlay(() => {
-      popup()?.classList.add('audio-glow');
-    });
+    const frame = (ts: number) => {
+      const dt = prevTs ? Math.min(50, ts - prevTs) / 1000 : 0.016;
+      prevTs = ts;
 
-    // Mod 29: remove glow only when sound actually stops
-    const unsubStop = onAudioStop(() => {
-      popup()?.classList.remove('audio-glow');
-    });
+      let loud = 0;
+      const analyser = getAnalyser();
+      if (analyser) {
+        if (!bins || bins.length !== analyser.frequencyBinCount) {
+          bins = new Uint8Array(analyser.frequencyBinCount);
+        }
+        analyser.getByteFrequencyData(bins);
+        let peak = 0;
+        let sum = 0;
+        for (let i = 0; i < bins.length; i++) {
+          const v = bins[i];
+          sum += v;
+          if (v > peak) peak = v;
+        }
+        if (peak > 10) lastHigh = performance.now();
+        loud = sum / bins.length / 255;
+      }
 
-    return () => { unsubPlay(); unsubStop(); };
+      const active = performance.now() - lastHigh < 150;
+      // Floor keeps the ring alive during quiet passages of an active sound
+      const target = active ? Math.max(0.35, Math.min(1, loud * 2.2)) : 0;
+      // Quick attack, gentle release
+      level += (target - level) * (target > level ? 0.35 : 0.08);
+
+      // Breathing pulse rides on top of the audio envelope: the whole ring
+      // glows up and down (~1.4 Hz) while sound is active.
+      t += dt;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 2 * Math.PI * 1.4);
+      const glow = level * (0.45 + 0.55 * pulse);
+
+      const popup = document.querySelector('.popup') as HTMLElement | null;
+      if (popup) {
+        popup.style.setProperty('--glow-o', level < 0.01 ? '0' : Math.min(1, 0.25 + glow * 1.1).toFixed(3));
+        popup.style.setProperty('--glow-b', (2 + glow * 12).toFixed(1) + 'px');
+      }
+
+      raf = requestAnimationFrame(frame);
+    };
+
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
   }, []);
 }
 
@@ -129,61 +171,6 @@ export default function App() {
   useInactivityReminder();
   useAudioGlow();
   useTrayWave();
-
-  // Live-apply label overrides saved from the Admin Dashboard
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    import('@tauri-apps/api/event').then(({ listen }) => {
-      listen<{ en: Record<string, string>; ar: Record<string, string> }>(
-        'labels-updated',
-        (e) => { useStore.getState().updateSettings({ labelOverrides: e.payload }); }
-      ).then((fn) => { unlisten = fn; });
-    });
-    return () => { unlisten?.(); };
-  }, []);
-
-  // Mod 84-85-89 / 97-100: rebuild sound pools when dashboard triggers a rescan
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    import('@tauri-apps/api/event').then(({ listen }) => {
-      listen<{ packs?: { id: string; name: string }[] }>('sounds-updated', async (e) => {
-        const discoveredPacks = await refreshAllPacks();
-        // Dashboard sends resolved names in payload; fall back to derived names
-        const userPacks = e.payload?.packs
-          ? e.payload.packs.filter(p => !['default','crisp','minimal','elsisi','bahgt','elguyar'].includes(p.id))
-          : discoveredPacks;
-        useStore.getState().setUserPacks(userPacks);
-        console.log('[App] sounds-updated — user packs now:', userPacks);
-      }).then((fn) => { unlisten = fn; });
-    });
-    return () => { unlisten?.(); };
-  }, []);
-
-  // Load branding on startup + listen for dashboard updates
-  useEffect(() => {
-    const applyBranding = async (b: { appName?: string; logoPath?: string }) => {
-      let logoDataUrl = '';
-      if (b.logoPath) {
-        try {
-          const { invoke } = await import('@tauri-apps/api/core');
-          logoDataUrl = await invoke<string>('read_image_as_data_url', { path: b.logoPath });
-        } catch {}
-      }
-      useStore.getState().setBranding({ appName: b.appName || 'TASK FM', logoDataUrl });
-    };
-
-    import('@tauri-apps/api/core').then(({ invoke }) => {
-      invoke<string>('get_branding').then(json => applyBranding(JSON.parse(json))).catch(() => {});
-    });
-
-    let unlisten: (() => void) | undefined;
-    import('@tauri-apps/api/event').then(({ listen }) => {
-      listen<{ appName?: string; logoPath?: string }>('branding-updated', (e) => {
-        applyBranding(e.payload);
-      }).then((fn) => { unlisten = fn; });
-    });
-    return () => { unlisten?.(); };
-  }, []);
 
   useEffect(() => {
     // Mod 49: globally disable media session so keyboard media keys never

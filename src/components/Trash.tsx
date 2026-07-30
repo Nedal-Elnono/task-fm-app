@@ -56,12 +56,14 @@ export function Trash() {
               </div>
             ) : (
               <button
-                className="archive-action-btn"
+                className="archive-action-btn danger"
                 onClick={() => setConfirmEmpty(true)}
                 title={t.emptyTrash}
-                style={{ fontSize: 10, padding: '3px 8px', height: 'auto', borderRadius: 6 }}
               >
-                {t.emptyTrash}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10 10v6M14 10v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
               </button>
             )}
           </div>
