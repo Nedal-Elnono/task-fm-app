@@ -44,6 +44,7 @@ npm run tauri build -- --target universal-apple-darwin
 
 > 🔑 **مفاتيح التحديث التلقائي**: `~/taskfm-signing/updater.key` (سري — من غيره مفيش تحديثات) والعام مسجل في `tauri.conf.json`. البناء لازم يكون بـ `TAURI_SIGNING_PRIVATE_KEY_PATH=$HOME/taskfm-signing/updater.key`
 > ⚠️ **نسخة الـ Mac App Store**: لازم تتبني **من غير** الـ updater (Apple بترفض التحديث الذاتي) — قبل بيلد الـ Store شيل الـ updater من الـ config مؤقتًا أو استخدم config override
+> ⚠️ **الـ Entitlements**: نسخة الموقع بتتبني بـ `"entitlements": null` (الـ sandbox كان بيخلي النافذة فاضية في نسخة Developer ID). نسخة الـ Store **لازم** ترجّع `"entitlements": "Entitlements.plist"` (الـ sandbox إجباري في MAS) — **ومطلوب حل مشكلة النافذة الفاضية تحت الـ sandbox قبل رفع نسخة الـ Store** (غالبًا محتاجة `com.apple.security.network.client` أو تعديل في تحميل الواجهة)
 
 > ⚠️ ملحوظة: أول نسخة موقّعة sandboxed هتبدأ بيانات جديدة في `~/Library/Containers/com.taskfm.app` — مستخدمي النسخة القديمة غير الموقّعة (0.0.1) مش هيلاقوا مهامهم القديمة تلقائيًا.
 
