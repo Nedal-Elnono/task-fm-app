@@ -115,52 +115,6 @@ function useAudioGlow() {
 }
 
 
-// ─── Squircle clip (Apple continuous corner) ─────────────────────────────────
-
-function squirclePath(w: number, h: number, r: number): string {
-  // Derived from Apple's iOS icon formula (reverse-engineered):
-  //   influence zone  t = 1.25 × r  (curve starts earlier than a circle)
-  //   bezier control  c = 0.5 × t   (gradual curvature ramp-in, not abrupt)
-  // This produces the same superellipse-like "continuous corner" used in
-  // macOS windows, iOS icons, and Apple's HIG rounded rectangles.
-  const t = Math.min(r * 1.25, w / 2, h / 2);
-  const c = t * 0.5;
-  return (
-    `M ${t} 0 L ${w - t} 0 ` +
-    `C ${w - c} 0 ${w} ${c} ${w} ${t} ` +
-    `L ${w} ${h - t} ` +
-    `C ${w} ${h - c} ${w - c} ${h} ${w - t} ${h} ` +
-    `L ${t} ${h} ` +
-    `C ${c} ${h} 0 ${h - c} 0 ${h - t} ` +
-    `L 0 ${t} ` +
-    `C 0 ${c} ${c} 0 ${t} 0 Z`
-  );
-}
-
-function useSquircleClip() {
-  useEffect(() => {
-    const el = document.querySelector('.popup') as HTMLElement | null;
-    if (!el) return;
-
-    const apply = () => {
-      const { width, height } = el.getBoundingClientRect();
-      if (width === 0 || height === 0) return;
-      el.style.clipPath = `path('${squirclePath(width, height, 19)}')`;
-      el.style.borderRadius = '0';
-    };
-
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    apply();
-
-    return () => {
-      ro.disconnect();
-      el.style.clipPath = '';
-      el.style.borderRadius = '';
-    };
-  }, []);
-}
-
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 
@@ -174,7 +128,6 @@ export default function App() {
   useIdleSound();
   useInactivityReminder();
   useAudioGlow();
-  useSquircleClip();
   useTrayWave();
 
   // Live-apply label overrides saved from the Admin Dashboard
@@ -294,7 +247,6 @@ export default function App() {
   }
 
   return (
-    <div style={{ width:'100%', height:'100%', paddingTop:0, paddingLeft:10, paddingRight:10, paddingBottom:10, boxSizing:'border-box', background:'transparent' }}>
     <div className="popup">
       <AnimatePresence mode="wait">
         {view === 'onboarding' && <Onboarding key="onboarding" />}
@@ -303,7 +255,6 @@ export default function App() {
         {view === 'archive'   && <Archive    key="archive" />}
         {view === 'trash'     && <Trash      key="trash" />}
       </AnimatePresence>
-    </div>
     </div>
   );
 }

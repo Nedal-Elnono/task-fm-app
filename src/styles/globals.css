@@ -40,7 +40,7 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
   font-family: var(--font);
-  background: transparent;
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
@@ -65,17 +65,15 @@ input, textarea {
   background: none;
 }
 
-/* Popup shell */
+/* Popup shell — fills the (opaque, natively-rounded) window */
 .popup {
   width: 100%;
   height: 100%;
   background: var(--bg);
-  border-radius: var(--radius);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  border: 1px solid var(--border);
 }
 
 /* View wrapper */
@@ -732,8 +730,21 @@ input, textarea {
   transition: border-color 0.4s, box-shadow 0.4s;
 }
 
-.popup.audio-glow {
-  border-color: rgba(245, 197, 66, 0.45);
+/* Glow ring drawn on an overlay above all content — an inset shadow on
+   .popup itself would be painted underneath children touching the edges. */
+.popup::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  border-radius: 10px; /* follows the native macOS window corner radius */
+  box-shadow: inset 0 0 0 1px rgba(245, 197, 66, 0.45);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.popup.audio-glow::after {
+  opacity: 1;
 }
 
 /* ─── Step Drag Handle ─── */

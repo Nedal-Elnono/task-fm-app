@@ -6,5 +6,11 @@
 	<false/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2025 TASK FM. All rights reserved.</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
 </dict>
 </plist>

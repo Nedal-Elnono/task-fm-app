@@ -338,6 +338,28 @@ fn scan_sound_files(app: AppHandle, event: String) -> Vec<String> {
         .collect()
 }
 
+/// Extract a zip archive in-process. Runs inside the App Sandbox, unlike
+/// spawning /usr/bin/unzip (child processes don't inherit file-access grants).
+fn extract_zip(zip_path: &str, dest: &std::path::Path) -> Result<(), String> {
+    let file = std::fs::File::open(zip_path).map_err(|e| e.to_string())?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let Some(rel_path) = entry.enclosed_name() else { continue };
+        let out_path = dest.join(rel_path);
+        if entry.is_dir() {
+            std::fs::create_dir_all(&out_path).map_err(|e| e.to_string())?;
+        } else {
+            if let Some(parent) = out_path.parent() {
+                std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            }
+            let mut out = std::fs::File::create(&out_path).map_err(|e| e.to_string())?;
+            std::io::copy(&mut entry, &mut out).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
+}
+
 // ─── Generic File Pack Commands ───────────────────────────────────────────────
 
 /// Standard folder→event mappings shared by all file-based packs
@@ -435,7 +457,6 @@ fn scan_file_pack_files(app: AppHandle, pack_id: String, event: String) -> Vec<S
 #[tauri::command]
 fn install_file_pack(app: AppHandle, pack_id: String, zip_path: String) -> Result<String, String> {
     use std::fs;
-    use std::process::Command;
 
     let base = app
         .path()
@@ -452,15 +473,7 @@ fn install_file_pack(app: AppHandle, pack_id: String, zip_path: String) -> Resul
     let _ = fs::remove_dir_all(&tmp);
     fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
 
-    let status = Command::new("unzip")
-        .args(["-q", "-o", &zip_path, "-d"])
-        .arg(&tmp)
-        .status()
-        .map_err(|e| e.to_string())?;
-
-    if !status.success() {
-        return Err("unzip failed".into());
-    }
+    extract_zip(&zip_path, &tmp)?;
 
     let source_root = fs::read_dir(&tmp)
         .map_err(|e| e.to_string())?
@@ -600,7 +613,6 @@ fn scan_elsisi_files(app: AppHandle, event: String) -> Vec<String> {
 #[tauri::command]
 fn install_elsisi_pack(app: AppHandle, zip_path: String) -> Result<String, String> {
     use std::fs;
-    use std::process::Command;
 
     let base = app
         .path()
@@ -628,15 +640,7 @@ fn install_elsisi_pack(app: AppHandle, zip_path: String) -> Result<String, Strin
     let _ = fs::remove_dir_all(&tmp);
     fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
 
-    let status = Command::new("unzip")
-        .args(["-q", "-o", &zip_path, "-d"])
-        .arg(&tmp)
-        .status()
-        .map_err(|e| e.to_string())?;
-
-    if !status.success() {
-        return Err("unzip failed".into());
-    }
+    extract_zip(&zip_path, &tmp)?;
 
     let source_root = fs::read_dir(&tmp)
         .map_err(|e| e.to_string())?
@@ -688,10 +692,6 @@ fn update_tray_icon_rgba(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec![]),
-        ))
         .setup(|app| {
             // macOS: show in both Dock and menu bar
             #[cfg(target_os = "macos")]
