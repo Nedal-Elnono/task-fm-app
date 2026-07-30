@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import type { Update } from '@tauri-apps/plugin-updater';
 import { useStore } from './store/useStore';
+import { useT } from './hooks/useT';
 import { TaskList } from './components/TaskList';
 import { Settings } from './components/Settings';
 import { Archive } from './components/Archive';
@@ -157,6 +159,35 @@ function useAudioGlow() {
 }
 
 
+// ─── Auto-updater ─────────────────────────────────────────────────────────────
+
+function useUpdater() {
+  const [update, setUpdate] = useState<Update | null>(null);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    // Check once on startup; fails silently in dev builds / offline
+    import('@tauri-apps/plugin-updater')
+      .then(({ check }) => check())
+      .then((u) => { if (u) setUpdate(u); })
+      .catch(() => {});
+  }, []);
+
+  const install = async () => {
+    if (!update || installing) return;
+    setInstalling(true);
+    try {
+      await update.downloadAndInstall();
+      const { relaunch } = await import('@tauri-apps/plugin-process');
+      await relaunch();
+    } catch {
+      setInstalling(false);
+    }
+  };
+
+  return { update, installing, install };
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 
@@ -166,11 +197,13 @@ export default function App() {
   const view = useStore((s) => s.view);
   const settings = useStore((s) => s.settings);
   const autoArchiveStale = useStore((s) => s.autoArchiveStale);
+  const t = useT();
 
   useIdleSound();
   useInactivityReminder();
   useAudioGlow();
   useTrayWave();
+  const { update, installing, install } = useUpdater();
 
   useEffect(() => {
     // Mod 49: globally disable media session so keyboard media keys never
@@ -242,6 +275,17 @@ export default function App() {
         {view === 'archive'   && <Archive    key="archive" />}
         {view === 'trash'     && <Trash      key="trash" />}
       </AnimatePresence>
+
+      {update && (
+        <div className="update-banner">
+          <span className="update-banner-text">
+            {t.updateAvailable} <b>v{update.version}</b>
+          </span>
+          <button className="update-banner-btn" onClick={install} disabled={installing}>
+            {installing ? t.updating : t.updateNow}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

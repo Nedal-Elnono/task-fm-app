@@ -38,8 +38,12 @@ npm run tauri build -- --target universal-apple-darwin
 ```
 
 6. اتأكد إن الـ DMG سليم: `spctl -a -t open --context context:primary-signature -v path/to/TASK\ FM.dmg` — المفروض تشوف `accepted`
-7. **ارفع الـ DMG** كـ Release جديد `v1.0.0` على GitHub (`Nedal-Elnono/task-fm-app`) باسم `TASK-FM-mac-1.0.0.dmg`
-8. **حدّث لينك التحميل** في `landing/index.html` (سطر واحد): غيّر `releases/download/v0.0.1/TASK-FM-mac-0.0.1.dmg` لـ `releases/download/v1.0.0/TASK-FM-mac-1.0.0.dmg` وانشر التحديث على taskfm.shop — فولدر `landing/` هو نسخة مطابقة من الموقع الحالي + صفحتي `privacy.html` و`terms.html` الجداد
+7. **جهّز ملفات الـ Release**: `node scripts/prepare-release.mjs <version>` — بيطلع فولدر فيه الـ DMG + ملفات التحديث التلقائي (`.app.tar.gz` + `.sig` + `latest.json`)
+8. **ارفع Release على GitHub** بكل الملفات دي: `gh release create v<version> release-<version>/* --title "TASK FM v<version>"` — الـ `latest.json` لازم يترفع مع كل release عشان التحديث التلقائي يشتغل (التطبيقات بتسأل `releases/latest/download/latest.json`)
+9. **حدّث لينك التحميل** في `landing/index.html` (سطر واحد) للـ DMG الجديد وانشر على taskfm.shop
+
+> 🔑 **مفاتيح التحديث التلقائي**: `~/taskfm-signing/updater.key` (سري — من غيره مفيش تحديثات) والعام مسجل في `tauri.conf.json`. البناء لازم يكون بـ `TAURI_SIGNING_PRIVATE_KEY_PATH=$HOME/taskfm-signing/updater.key`
+> ⚠️ **نسخة الـ Mac App Store**: لازم تتبني **من غير** الـ updater (Apple بترفض التحديث الذاتي) — قبل بيلد الـ Store شيل الـ updater من الـ config مؤقتًا أو استخدم config override
 
 > ⚠️ ملحوظة: أول نسخة موقّعة sandboxed هتبدأ بيانات جديدة في `~/Library/Containers/com.taskfm.app` — مستخدمي النسخة القديمة غير الموقّعة (0.0.1) مش هيلاقوا مهامهم القديمة تلقائيًا.
 

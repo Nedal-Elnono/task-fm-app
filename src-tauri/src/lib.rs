@@ -606,6 +606,8 @@ fn update_tray_icon_rgba(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             // macOS: show in both Dock and menu bar
             #[cfg(target_os = "macos")]

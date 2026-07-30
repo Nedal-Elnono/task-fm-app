@@ -100,6 +100,9 @@ export const translations = {
     ambientSoundsLabel: 'Random idle sound',
     getStarted: 'Get Started',
     logout: 'Log Out',
+    updateAvailable: 'Update available',
+    updateNow: 'Update',
+    updating: 'Updating…',
   },
 
   ar: {
@@ -203,6 +206,9 @@ export const translations = {
     ambientSoundsLabel: 'صوت عشوائي',
     getStarted: 'ابدأ الآن',
     logout: 'تسجيل الخروج',
+    updateAvailable: 'تحديث جديد متاح',
+    updateNow: 'تحديث',
+    updating: 'جاري التحديث…',
   },
 } as const;
 
