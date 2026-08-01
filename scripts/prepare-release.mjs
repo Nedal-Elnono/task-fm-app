@@ -35,6 +35,11 @@ copyFileSync(join(macosDir, tarball), join(out, tarName));
 copyFileSync(join(macosDir, sigFile), join(out, `${tarName}.sig`));
 copyFileSync(join(dmgDir, dmg), join(out, dmgName));
 
+// Second copy under a version-less name. The landing page links to
+// releases/latest/download/TASK-FM-mac.dmg, which GitHub resolves to whichever
+// release is newest — so the site serves the current build without being edited.
+copyFileSync(join(dmgDir, dmg), join(out, 'TASK-FM-mac.dmg'));
+
 const signature = readFileSync(join(macosDir, sigFile), 'utf8').trim();
 const url = `https://github.com/${REPO}/releases/download/v${version}/${tarName}`;
 const platform = { signature, url };
@@ -51,7 +56,8 @@ const latest = {
 writeFileSync(join(out, 'latest.json'), JSON.stringify(latest, null, 2));
 
 console.log(`✓ Release folder ready: ${out}/`);
-console.log(`  - ${dmgName}            (website download)`);
+console.log(`  - ${dmgName}            (versioned download)`);
+console.log(`  - TASK-FM-mac.dmg                      (stable URL the website links to)`);
 console.log(`  - ${tarName}      (auto-update payload)`);
 console.log(`  - ${tarName}.sig  (update signature)`);
 console.log(`  - latest.json                          (update manifest)`);
