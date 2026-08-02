@@ -44,7 +44,7 @@ npm run tauri build -- --target universal-apple-darwin
 
 > 🔑 **مفاتيح التحديث التلقائي**: `~/taskfm-signing/updater.key` (سري — من غيره مفيش تحديثات) والعام مسجل في `tauri.conf.json`. البناء لازم يكون بـ `TAURI_SIGNING_PRIVATE_KEY_PATH=$HOME/taskfm-signing/updater.key`
 > ⚠️ **نسخة الـ Mac App Store**: لازم تتبني **من غير** الـ updater (Apple بترفض التحديث الذاتي) — قبل بيلد الـ Store شيل الـ updater من الـ config مؤقتًا أو استخدم config override
-> ⚠️ **الـ Entitlements**: نسخة الموقع بتتبني بـ `"entitlements": null` (الـ sandbox كان بيخلي النافذة فاضية في نسخة Developer ID). نسخة الـ Store **لازم** ترجّع `"entitlements": "Entitlements.plist"` (الـ sandbox إجباري في MAS) — **ومطلوب حل مشكلة النافذة الفاضية تحت الـ sandbox قبل رفع نسخة الـ Store** (غالبًا محتاجة `com.apple.security.network.client` أو تعديل في تحميل الواجهة)
+> ✅ **مشكلة النافذة الفاضية اتحلت (2026-08-02)**: السبب كان غياب `com.apple.security.network.client` من الـ Entitlements — عمليات WKWebView المساعدة محتاجاها تحت الـ sandbox وإلا الـ webview مش بيرسم خالص. اتضافت في `Entitlements.plist` واتأكدنا بالتجربة إن التطبيق كامل بيشتغل sandboxed. نسخة الموقع لسه بتتبني بـ `"entitlements": null` زي ما هي؛ نسخة الـ Store بتاخد الـ entitlements عن طريق `scripts/build-mas.sh`
 
 > ⚠️ ملحوظة: أول نسخة موقّعة sandboxed هتبدأ بيانات جديدة في `~/Library/Containers/com.taskfm.app` — مستخدمي النسخة القديمة غير الموقّعة (0.0.1) مش هيلاقوا مهامهم القديمة تلقائيًا.
 
@@ -52,7 +52,9 @@ npm run tauri build -- --target universal-apple-darwin
 
 ## المرحلة 3: نسخة الـ Mac App Store
 
-الـ Store بياخد `.pkg` موقّع مش DMG. Tauri v2 مش بيعمل ده أوتوماتيك بالكامل، فالخطوات:
+> ✅ **كل المرحلة دي بقت سكريبت واحد**: حط `embedded.provisionprofile` في جذر المشروع وشغّل `scripts/build-mas.sh` — بيبني universal بدون updater (`--features mas`)، بيوقّع بالـ entitlements، وبيطلّع `.pkg` جاهز للرفع.
+
+الخطوات اليدوية القديمة (للمرجعية):
 
 ```bash
 # 1. ابني الـ .app بشهادة Apple Distribution

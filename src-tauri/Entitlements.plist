@@ -4,6 +4,10 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- WKWebView's helper processes need this under the sandbox; without it
+	     the webview never paints (blank window). See tauri-docs#3171. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
 </dict>
