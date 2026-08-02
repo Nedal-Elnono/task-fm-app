@@ -1375,24 +1375,24 @@ window.toggleTheme = function() {
 const PACKS = {
   bahgt: {
     name: 'Bahgat',
-    hover:['sounds/bahgt/hover-1.mp3','sounds/bahgt/hover-2.mp3','sounds/bahgt/hover-3.mp3'],
-    new:  ['sounds/bahgt/new-1.mp3','sounds/bahgt/new-2.mp3','sounds/bahgt/new-3.mp3','sounds/bahgt/new-4.mp3','sounds/bahgt/new-5.mp3','sounds/bahgt/new-6.mp3'],
-    done: ['sounds/bahgt/done-1.mp3','sounds/bahgt/done-2.mp3','sounds/bahgt/done-3.mp3'],
-    step: ['sounds/bahgt/step-1.mp3'],
+    hover:['sounds/bahgt/hover-1.mp3?v=2','sounds/bahgt/hover-2.mp3?v=2','sounds/bahgt/hover-3.mp3?v=2'],
+    new:  ['sounds/bahgt/new-1.mp3?v=2','sounds/bahgt/new-2.mp3?v=2','sounds/bahgt/new-3.mp3?v=2','sounds/bahgt/new-4.mp3?v=2','sounds/bahgt/new-5.mp3?v=2','sounds/bahgt/new-6.mp3?v=2'],
+    done: ['sounds/bahgt/done-1.mp3?v=2','sounds/bahgt/done-2.mp3?v=2','sounds/bahgt/done-3.mp3?v=2'],
+    step: ['sounds/bahgt/step-1.mp3?v=2'],
   },
   elsisi: {
     name: 'Sisi',
-    hover:['sounds/elsisi/hover-1.mp3','sounds/elsisi/hover-2.mp3'],
-    new:  ['sounds/elsisi/new-1.mp4','sounds/elsisi/new-2.mp4','sounds/elsisi/new-3.mp4','sounds/elsisi/new-4.mp4','sounds/elsisi/new-5.mp4','sounds/elsisi/new-6.mp4','sounds/elsisi/new-7.mp4','sounds/elsisi/new-8.mp4','sounds/elsisi/new-9.mp4','sounds/elsisi/new-10.mp4','sounds/elsisi/new-11.mp4'],
-    done: ['sounds/elsisi/done-1.mp4','sounds/elsisi/done-2.mp4','sounds/elsisi/done-3.mp4','sounds/elsisi/done-4.mp4','sounds/elsisi/done-5.mp4','sounds/elsisi/done-6.mp4','sounds/elsisi/done-7.mp4'],
-    step: ['sounds/elsisi/step-1.mp4','sounds/elsisi/step-2.mp4','sounds/elsisi/step-3.mp4','sounds/elsisi/step-4.mp4','sounds/elsisi/step-5.mp4','sounds/elsisi/step-6.mp4','sounds/elsisi/step-7.mp4','sounds/elsisi/step-8.mp4'],
+    hover:['sounds/elsisi/hover-1.mp3?v=2','sounds/elsisi/hover-2.mp3?v=2'],
+    new:  ['sounds/elsisi/new-1.mp4?v=2','sounds/elsisi/new-2.mp4?v=2','sounds/elsisi/new-3.mp4?v=2','sounds/elsisi/new-4.mp4?v=2','sounds/elsisi/new-5.mp4?v=2','sounds/elsisi/new-6.mp4?v=2','sounds/elsisi/new-7.mp4?v=2','sounds/elsisi/new-8.mp4?v=2','sounds/elsisi/new-9.mp4?v=2','sounds/elsisi/new-10.mp4?v=2','sounds/elsisi/new-11.mp4?v=2'],
+    done: ['sounds/elsisi/done-1.mp4?v=2','sounds/elsisi/done-2.mp4?v=2','sounds/elsisi/done-3.mp4?v=2','sounds/elsisi/done-4.mp4?v=2','sounds/elsisi/done-5.mp4?v=2','sounds/elsisi/done-6.mp4?v=2','sounds/elsisi/done-7.mp4?v=2'],
+    step: ['sounds/elsisi/step-1.mp4?v=2','sounds/elsisi/step-2.mp4?v=2','sounds/elsisi/step-3.mp4?v=2','sounds/elsisi/step-4.mp4?v=2','sounds/elsisi/step-5.mp4?v=2','sounds/elsisi/step-6.mp4?v=2','sounds/elsisi/step-7.mp4?v=2','sounds/elsisi/step-8.mp4?v=2'],
   },
   elguyar: {
     name: 'El Guyar',
-    hover:['sounds/elguyar/hover-1.mp3','sounds/elguyar/hover-2.mp3'],
-    new:  ['sounds/elguyar/new-1.mp3','sounds/elguyar/new-2.mp3','sounds/elguyar/new-3.mp3','sounds/elguyar/new-4.mp3'],
-    done: ['sounds/elguyar/done-1.mp3','sounds/elguyar/done-2.mp3','sounds/elguyar/done-3.mp3','sounds/elguyar/done-4.mp3'],
-    step: ['sounds/elguyar/step-1.mp3','sounds/elguyar/step-2.mp3','sounds/elguyar/step-3.mp3','sounds/elguyar/step-4.mp3'],
+    hover:['sounds/elguyar/hover-1.mp3?v=2','sounds/elguyar/hover-2.mp3?v=2'],
+    new:  ['sounds/elguyar/new-1.mp3?v=2','sounds/elguyar/new-2.mp3?v=2','sounds/elguyar/new-3.mp3?v=2','sounds/elguyar/new-4.mp3?v=2'],
+    done: ['sounds/elguyar/done-1.mp3?v=2','sounds/elguyar/done-2.mp3?v=2','sounds/elguyar/done-3.mp3?v=2','sounds/elguyar/done-4.mp3?v=2'],
+    step: ['sounds/elguyar/step-1.mp3?v=2','sounds/elguyar/step-2.mp3?v=2','sounds/elguyar/step-3.mp3?v=2','sounds/elguyar/step-4.mp3?v=2'],
   },
 };
 
@@ -2277,9 +2277,9 @@ const revealObs = new IntersectionObserver((entries) => {
 
 // Fixed sound per step — NO randomness, each represents a different personality
 const DEMO_STEPS_SOUNDS = [
-  'sounds/bahgt/task-done.mp3',   // Step 1 — Bahgat: warm energy
-  'sounds/elsisi/task-done.mp3',  // Step 2 — Sisi: smooth & confident
-  'sounds/elguyar/task-done.mp3', // Step 3 — El Guyar: eccentric
+  'sounds/bahgt/task-done.mp3?v=2',   // Step 1 — Bahgat: warm energy
+  'sounds/elsisi/task-done.mp3?v=2',  // Step 2 — Sisi: smooth & confident
+  'sounds/elguyar/task-done.mp3?v=2', // Step 3 — El Guyar: eccentric
 ];
 
 // tasks populated from TASKS_EN on boot (or TASKS_AR if lang is Arabic)
@@ -3200,13 +3200,13 @@ document.addEventListener('DOMContentLoaded', () => {
 (function () {
 
   const SONGS = [
-    'sounds/radio/song-1.mp3',
-    'sounds/radio/song-2.mp3',
-    'sounds/radio/song-3.mp3',
-    'sounds/radio/song-4.mp3',
-    'sounds/radio/song-5.mp3',
-    'sounds/radio/song-6.mp3',
-    'sounds/radio/song-7.mp3',
+    'sounds/radio/song-1.mp3?v=2',
+    'sounds/radio/song-2.mp3?v=2',
+    'sounds/radio/song-3.mp3?v=2',
+    'sounds/radio/song-4.mp3?v=2',
+    'sounds/radio/song-5.mp3?v=2',
+    'sounds/radio/song-6.mp3?v=2',
+    'sounds/radio/song-7.mp3?v=2',
   ];
 
   // ── Pick a song for this session (different from previous session) ──────────
