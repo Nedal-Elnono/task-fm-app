@@ -31,6 +31,9 @@ APP="src-tauri/target/universal-apple-darwin/release/bundle/macos/TASK FM.app"
 echo "→ Embedding provisioning profile…"
 cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"
 
+echo "→ Stripping extended attributes (quarantine flags are rejected by App Store)…"
+xattr -cr "$APP"
+
 echo "→ Re-signing with entitlements (profile changed the bundle)…"
 codesign --force --options runtime \
   --entitlements src-tauri/Entitlements.mas.plist \
