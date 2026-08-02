@@ -701,6 +701,7 @@ pub fn run() {
                     }
                 }
                 // Handle dock icon click (macOS) — show popup, restore last position
+                #[cfg(target_os = "macos")]
                 tauri::RunEvent::Reopen { .. } => {
                     if let Some(window) = app.get_webview_window("main") {
                         restore_or_position_popup(&window);
