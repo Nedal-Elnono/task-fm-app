@@ -1038,6 +1038,37 @@ html.light .legal-close:hover { color:#111110; }
   .legal-header { padding:20px 16px 16px; }
 }
 </style>
+<!-- Resilience net: if the main script fails on any browser (old JS engine,
+     extension interference, runtime error), unlock the page so every section
+     still shows. Deliberately ES5-only. No effect when the site boots fine. -->
+<script>
+(function () {
+  var rescued = false;
+  function rescue() {
+    if (rescued) return;
+    var b = document.body;
+    if (!b || b.className.indexOf('loading') === -1) return;
+    rescued = true;
+    b.className = b.className.replace('loading', '');
+    var pre = document.getElementById('preloader');
+    if (pre) { pre.style.display = 'none'; }
+    var tb = document.getElementById('topbar');
+    if (tb) { tb.style.visibility = ''; }
+  }
+  function fixDemoTitles() {
+    if (window.__tfmStagesDone) return;
+    var ids = ['demo-label', 'demo-title'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el) { el.style.opacity = '1'; el.style.transform = 'none'; }
+    }
+  }
+  // Uncaught error anywhere -> check soon; otherwise absolute backstops.
+  window.addEventListener('error', function () { setTimeout(rescue, 4000); }, true);
+  setTimeout(rescue, 7000);
+  setTimeout(fixDemoTitles, 10000);
+})();
+</script>
 </head>
 <body class="loading">
 
@@ -1295,7 +1326,7 @@ html.light .legal-close:hover { color:#111110; }
 
 <!-- ═══ SCRIPTS ═══════════════════════════════════════ -->
 <script type="module">
-import { CircleWaveModel } from './js/CircleWaveModel.js';
+import { CircleWaveModel } from './js/CircleWaveModel.js?v=2';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // SCROLL RESTORATION — always open from top on refresh
@@ -2951,6 +2982,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hard fallback: reveal everything after 5 seconds regardless
   setTimeout(() => revealTargets.forEach(revealEl), 5000);
+
+  // Signals to the head-level rescue script that reveal machinery is wired.
+  window.__tfmStagesDone = true;
 });
 
 // ── RADIO INTERFERENCE AUDIO SYSTEM ──────────────────────────────────────────
