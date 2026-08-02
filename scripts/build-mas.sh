@@ -24,7 +24,7 @@ npm run tauri build -- \
   --target universal-apple-darwin \
   --bundles app \
   --features mas \
-  --config '{"bundle":{"createUpdaterArtifacts":false,"macOS":{"entitlements":"Entitlements.plist"}}}'
+  --config '{"bundle":{"createUpdaterArtifacts":false,"macOS":{"entitlements":"Entitlements.mas.plist"}}}'
 
 APP="src-tauri/target/universal-apple-darwin/release/bundle/macos/TASK FM.app"
 
@@ -33,7 +33,7 @@ cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"
 
 echo "→ Re-signing with entitlements (profile changed the bundle)…"
 codesign --force --options runtime \
-  --entitlements src-tauri/Entitlements.plist \
+  --entitlements src-tauri/Entitlements.mas.plist \
   --sign "$DIST_ID" "$APP"
 
 echo "→ Building signed pkg…"
